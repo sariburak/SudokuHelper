@@ -60,6 +60,18 @@ gridFirst3x3MissingFive = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0]
 ]
 
+easySudoku = [
+    [0, 5, 0, 0, 0, 0, 0, 0, 4],
+    [9, 0, 0, 4, 3, 0, 0, 0, 0],
+    [0, 0, 0, 2, 0, 9, 3, 8, 0],
+    [0, 9, 0, 0, 7, 0, 4, 5, 0],
+    [3, 0, 0, 0, 0, 2, 0, 0, 0],
+    [8, 7, 0, 0, 0, 0, 0, 1, 3],
+    [5, 0, 1, 0, 0, 8, 0, 0, 0],
+    [7, 0, 9, 3, 1, 0, 5, 6, 8],
+    [6, 0, 4, 7, 2, 5, 0, 3, 9]
+]
+
 exampleColors = [
     ["red" for _ in range(9)],
     ["blue" for _ in range(9)],
@@ -137,20 +149,24 @@ def isSolved(grid):
                 return False
     return True
 
-def step1(grid):
+def solveForOneCellWithOneDigit(grid):
     """
     Checks if there is a cell that can only have one digit
     """
+    # This is needed to avoid changing the original grid
+    grid = copy.deepcopy(grid)
     possibleDigits = findPossibleDigitsForCells(grid)
     for key, value in possibleDigits.items():
         if len(value) == 1:
             grid[key[0]][key[1]] = value[0]
     return grid
 
-def step2(grid):
+def solveOneDigitInARow(grid):
     """
     Checks if there is a digit that can only be placed in one cell in a row
     """
+    # This is needed to avoid changing the original grid
+    grid = copy.deepcopy(grid)
     possibleDigits = findPossibleDigitsForCells(grid)
     for i in range(0, 9):
         for digit in range(1, 10):
@@ -163,10 +179,12 @@ def step2(grid):
                 grid[index[0]][index[1]] = digit
     return grid
 
-def step3(grid):
+def solveOneDigitInAColumn(grid):
     """
     Checks if there is a digit that can only be placed in one cell in a column
     """
+    # This is needed to avoid changing the original grid
+    grid = copy.deepcopy(grid)
     possibleDigits = findPossibleDigitsForCells(grid)
     for j in range(0, 9):
         for digit in range(1, 10):
@@ -179,10 +197,12 @@ def step3(grid):
                 grid[index[0]][index[1]] = digit
     return grid
 
-def step4(grid):
+def solveOneDigitIn3x3(grid):
     """
     Checks if there is a digit that can only be placed in one cell in a 3x3 grid
     """
+    # This is needed to avoid changing the original grid
+    grid = copy.deepcopy(grid)
     possibleDigits = findPossibleDigitsForCells(grid)
     for i in range(0, 9, 3):
         for j in range(0, 9, 3):
@@ -195,4 +215,52 @@ def step4(grid):
                             index = (x, y)
                 if count == 1:
                     grid[index[0]][index[1]] = digit
+    return grid
+
+def solveOneDigit(grid):
+    """
+    Finds all the cells that can only have one digit and fills them
+    """
+    # This is needed to avoid changing the original grid
+    result = copy.deepcopy(grid)
+    # The results from different strategies are merged
+    # It is important that the result of one strategy is NOT fed to the next strategy
+    # This is because the strategies should be independent of each other.
+    # This requirement may change later on
+    result = mergeTwoGrids(result, solveForOneCellWithOneDigit(grid))
+    result = mergeTwoGrids(result, solveOneDigitInARow(grid))
+    result = mergeTwoGrids(result, solveOneDigitInAColumn(grid))
+    result = mergeTwoGrids(result, solveOneDigitIn3x3(grid))
+    return result
+
+def solveSudokuWithStrategies(grid):
+    """
+    Solves the sudoku using the strategies above
+    """
+    # This is needed to avoid changing the original grid
+    grid = copy.deepcopy(grid)
+    while True:
+        grid = solveForOneCellWithOneDigit(grid)
+        grid = solveOneDigitInARow(grid)
+        grid = solveOneDigitInAColumn(grid)
+        grid = solveOneDigitIn3x3(grid)
+        if isSolved(grid):
+            break
+    return grid
+
+# This function is used to merge two grids
+# If the two grids have the same value in the same cell, the value is kept
+# If the two grids have different values in the same cell, error is raised
+# If the cell from one grid is empty, the value from the other grid is kept
+def mergeTwoGrids(grid1, grid2):
+    grid = copy.deepcopy(grid1)
+    for i in range(0, 9):
+        for j in range(0, 9):
+            if grid1[i][j] != grid2[i][j]:
+                if grid1[i][j] == 0:
+                    grid[i][j] = grid2[i][j]
+                elif grid2[i][j] == 0:
+                    grid[i][j] = grid1[i][j]
+                else:
+                    raise Exception("Two grids have different values in the same cell")
     return grid

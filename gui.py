@@ -68,10 +68,13 @@ class SudokuBoardGUI(QWidget):
         solve_button.clicked.connect(self.solve)
         step1_button = QPushButton("Step 1")
         step1_button.clicked.connect(self.step_1)
+        step2_button = QPushButton("Step 2")
+        step2_button.clicked.connect(self.step_2)
 
         right_sidebar = QVBoxLayout()
         right_sidebar.addWidget(pushy_button)
         right_sidebar.addWidget(step1_button)
+        right_sidebar.addWidget(step2_button)
         right_sidebar.addWidget(solve_button)
 
 
@@ -83,27 +86,24 @@ class SudokuBoardGUI(QWidget):
         # TODO: Do we really need to keep this widget?
         self.widget = QWidget()
         self.setLayout(self.layout)
+
     def step_1(self):
         print("Step 1 button is clicked")
         grid = self.exportGrid()
-        solution = solver.step1(grid)
+        solution = solver.solveForOneCellWithOneDigit(grid)
+        colors = findColors(grid, solution)
+        self.importGrid(solution, colors)
+
+    def step_2(self):
+        print("Step 2 button is clicked")
+        grid = self.exportGrid()
+        solution = solver.solveOneDigit(grid)
         colors = findColors(grid, solution)
         self.importGrid(solution, colors)
 
     def fill_blanks(self):
         print("Fill Blanks button is clicked")
-        exampleGrid = [
-            [5, 0, 0, 6, 1, 9, 0, 3, 0],
-            [0, 3, 0, 4, 8, 2, 1, 0, 0],
-            [0, 0, 0, 7, 3, 5, 0, 4, 0],
-            [0, 2, 0, 0, 7, 0, 0, 0, 0],
-            [0, 0, 0, 0, 5, 0, 6, 0, 0],
-            [8, 0, 0, 2, 9, 6, 0, 0, 4],
-            [0, 0, 9, 5, 4, 7, 0, 0, 8],
-            [0, 5, 8, 3, 2, 1, 4, 0, 0],
-            [0, 0, 0, 9, 6, 8, 0, 0, 0]
-        ]
-        self.importGrid(exampleGrid)
+        self.importGrid(solver.easySudoku)
 
     def solve(self):
         print("Solve button is clicked")
