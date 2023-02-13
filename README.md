@@ -23,3 +23,14 @@ This project heavily depends on what I learn from `https://www.pythonguis.com/tu
 
 
 [One char validator for QLineEdit](https://stackoverflow.com/questions/17908040/is-there-a-convenient-way-to-input-only-one-character-by-some-qt-widget)
+
+
+## TODO
+- Add unit test
+
+## Bugs
+- Not known any
+
+## How to run tets
+
+`python -m unittest solvertest.py`

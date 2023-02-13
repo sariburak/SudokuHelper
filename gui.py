@@ -1,6 +1,7 @@
 import sys
 
 import solver
+import gridsamples
 
 from PyQt6.QtGui import QContextMenuEvent, QAction, QFocusEvent, QValidator, QRegularExpressionValidator
 from PyQt6.QtCore import QSize, Qt, QRegularExpression
@@ -103,7 +104,7 @@ class SudokuBoardGUI(QWidget):
 
     def fill_blanks(self):
         print("Fill Blanks button is clicked")
-        self.importGrid(solver.easySudoku)
+        self.importGrid(gridsamples.easySudoku)
 
     def solve(self):
         print("Solve button is clicked")
