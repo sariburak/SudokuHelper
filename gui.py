@@ -1,7 +1,7 @@
 import sys
 
 import solver
-import gridsamples
+import sudoku_service
 import saver
 
 from PyQt6.QtGui import QContextMenuEvent, QAction, QFocusEvent, QValidator, QRegularExpressionValidator
@@ -64,6 +64,10 @@ class SudokuBoardGUI(QWidget):
                 self.gridLayout.addWidget(cell, i, j)
 
         # Initialize and fill vertical layout
+        create_button = QPushButton("Create")
+        create_button.clicked.connect(self.create)
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.save)
         pushy_button = QPushButton("Load")
         pushy_button.clicked.connect(self.load)
         solve_button = QPushButton("Solve")
@@ -74,6 +78,8 @@ class SudokuBoardGUI(QWidget):
         step2_button.clicked.connect(self.step_2)
 
         right_sidebar = QVBoxLayout()
+        right_sidebar.addWidget(create_button)
+        right_sidebar.addWidget(save_button)
         right_sidebar.addWidget(pushy_button)
         right_sidebar.addWidget(step1_button)
         right_sidebar.addWidget(step2_button)
@@ -102,6 +108,11 @@ class SudokuBoardGUI(QWidget):
         solution = solver.solveOneDigit(grid)
         colors = findColors(grid, solution)
         self.importGrid(solution, colors)
+
+    def create(self):
+        print("Create button is clicked")
+        grid = sudoku_service.get_sudoku("hard")
+        self.importGrid(grid)
 
     def load(self):
         print("Load button is clicked")
