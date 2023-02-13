@@ -1,38 +1,26 @@
 import requests
 
-url = "https://sudoku-generator1.p.rapidapi.com/sudoku/generate"
-headers = {
-    'X-RapidAPI-Key': 'f852b7bb72msh6e89f14fe4a0ecfp1a39bbjsn9c2f7273854c',
-    'X-RapidAPI-Host': 'sudoku-generator1.p.rapidapi.com'
-}
-params = {
-    'seed': '1337',
-    'difficulty': 'easy',
-}
+# curl 'https://sudoku.com/api/level/medium' \
+#   -H 'x-requested-with: XMLHttpRequest'
 
-#Example response
+# Example response:
 # {
-#   "seed": 1337,
-#   "difficulty": "Easy",
-#   "puzzle": "..3465..2.862..7..92...7.1.6....234..15....69.42..8.......364717..5.49.3..987.5.."
+#   "id": 1318,
+#   "mission": "002300405080029700004560000500980070040050030800000000406000100010005090703100204",
+#   "solution": "962378415185429763374561928531984672649257831827613549496832157218745396753196284",
+#   "win_rate": 59.35
 # }
 
-# Generate a sudoku puzzle
-# difficulty: easy, medium, hard
-def generateSudoku(difficulty = None):
-    if difficulty:
-        params['difficulty'] = difficulty
-    response = requests.request("GET", url, headers=headers, params=params)
-    puzzle = response.json()['puzzle']
-    # Convert puzzle into 2D array
+# level: easy, medium, hard, expert, evil
+url = "https://sudoku.com/api/level/{level}"
+headers = {
+   "x-requested-with": "XMLHttpRequest"
+}
+
+def get_sudoku(level):
+    r = requests.get(url.format(level=level), headers=headers)
+    sudoku = r.json().get("mission")
     grid = []
     for i in range(9):
-        grid.append([])
-        for j in range(9):
-            index = i*9+j
-            if puzzle[index] == '.':
-                grid[i].append(0)
-            else:
-                grid[i].append(int(puzzle[i*9+j]))
+        grid.append([int(sudoku[i*9+j]) for j in range(9)])
     return grid
-
