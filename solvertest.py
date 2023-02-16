@@ -137,7 +137,8 @@ class TestSolverMethods(unittest.TestCase):
         ]
 
         for test in tests:
-            self.assertEqual(test["want"], solver.solveForOneCellWithOneDigit(test["grid"]))
+            possible = solver.findPossibleDigitsForCells(test["grid"])
+            self.assertEqual(test["want"], solver.solveForOneCellWithOneDigit(test["grid"], possible))
 
     def testSolveOneDigitInARow(self):
         tests = [
@@ -194,7 +195,8 @@ class TestSolverMethods(unittest.TestCase):
         ]
 
         for test in tests:
-            self.assertEqual(test["want"], solver.solveOneDigitInARow(test["grid"]))
+            possible = solver.findPossibleDigitsForCells(test["grid"])
+            self.assertEqual(test["want"], solver.solveOneDigitInARow(test["grid"], possible))
 
     def testSolveOneDigitInAColumn(self):
         tests = [
@@ -251,7 +253,8 @@ class TestSolverMethods(unittest.TestCase):
         ]
 
         for test in tests:
-            self.assertEqual(test["want"], solver.solveOneDigitInAColumn(test["grid"]))
+            possible = solver.findPossibleDigitsForCells(test["grid"])
+            self.assertEqual(test["want"], solver.solveOneDigitInAColumn(test["grid"], possible))
 
     def testSolveOneDigitIn3x3(self):
         tests = [
@@ -308,7 +311,40 @@ class TestSolverMethods(unittest.TestCase):
         ]
 
         for test in tests:
-            self.assertEqual(test["want"], solver.solveOneDigitIn3x3(test["grid"]))
+            possible = solver.findPossibleDigitsForCells(test["grid"])
+            self.assertEqual(test["want"], solver.solveOneDigitIn3x3(test["grid"], possible))
+
+    def testEliminateDigitsWithRay(self):
+        tests = [
+            {
+                "description": "simple example",
+                "grid": [
+                    [1, 2, 3, 0, 0, 0, 0, 0, 0],
+                    [0, 4, 0, 0, 0, 0, 0, 0, 0],
+                    [6, 7, 8, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                ],
+                "expects": {
+                    "row": 1,
+                    "exceptionGrid": 0,
+                    "notPossible": {0, 9}
+                }
+            }
+        ]
+
+        for test in tests:
+            possible = solver.findPossibleDigitsForCells(test["grid"])
+            solver.eliminateDigitsWithRay(possible)
+            for coordinate, digits in possible.items():
+                gridIndex = solver.calculateGridIndex(*coordinate)
+                if gridIndex == test["expects"]["exceptionGrid"] or coordinate[0] != test["expects"]["row"]:
+                    continue
+                self.assertTrue(test["expects"]["notPossible"].isdisjoint(set(digits)))
 
     if __name__ == '__main__':
         unittest.main()

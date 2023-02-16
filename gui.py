@@ -72,17 +72,14 @@ class SudokuBoardGUI(QWidget):
         pushy_button.clicked.connect(self.load)
         solve_button = QPushButton("Solve")
         solve_button.clicked.connect(self.solve)
-        step1_button = QPushButton("Step 1")
-        step1_button.clicked.connect(self.step_1)
-        step2_button = QPushButton("Step 2")
-        step2_button.clicked.connect(self.step_2)
+        step_button = QPushButton("Step")
+        step_button.clicked.connect(self.step)
 
         right_sidebar = QVBoxLayout()
         right_sidebar.addWidget(create_button)
         right_sidebar.addWidget(save_button)
         right_sidebar.addWidget(pushy_button)
-        right_sidebar.addWidget(step1_button)
-        right_sidebar.addWidget(step2_button)
+        right_sidebar.addWidget(step_button)
         right_sidebar.addWidget(solve_button)
 
 
@@ -95,17 +92,11 @@ class SudokuBoardGUI(QWidget):
         self.widget = QWidget()
         self.setLayout(self.layout)
 
-    def step_1(self):
-        print("Step 1 button is clicked")
+    def step(self):
+        print("Step button is clicked")
         grid = self.exportGrid()
-        solution = solver.solveForOneCellWithOneDigit(grid)
-        colors = findColors(grid, solution)
-        self.importGrid(solution, colors)
-
-    def step_2(self):
-        print("Step 2 button is clicked")
-        grid = self.exportGrid()
-        solution = solver.solveOneDigit(grid)
+        possible = solver.findPossibleDigitsForCells(grid, solver.eliminateDigitsWithRay)
+        solution = solver.solveOneDigit(grid, possible)
         colors = findColors(grid, solution)
         self.importGrid(solution, colors)
 

@@ -72,6 +72,18 @@ easySudoku = [
     [6, 0, 4, 7, 2, 5, 0, 3, 9]
 ]
 
+raySudoku = [
+    [1, 2, 3, 0, 0, 0, 0, 0, 0],
+    [0, 4, 0, 0, 0, 0, 0, 0, 0],
+    [6, 7, 8, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0],
+]
+
 exampleColors = [
     ["red" for _ in range(9)],
     ["blue" for _ in range(9)],
@@ -83,6 +95,9 @@ exampleColors = [
     ["" for _ in range(9)],
     ["" for _ in range(9)]
 ]
+
+def calculateGridIndex(x, y):
+    return (x // 3) * 3 + y // 3
 
 # Checks if the given number is suitable for point (i, j)
 def checkIfPossible(grid, number, i, j):
@@ -106,7 +121,7 @@ def checkIfPossible(grid, number, i, j):
 # findPossibleDigitsForCells return a map of (int, int) -> [int].
 # The key of this map is the index on the grid
 # The value of this map is the list of possible digits that can be placed in that cell
-def findPossibleDigitsForCells(grid):
+def findPossibleDigitsForCells(grid, *opts):
     possibleDigits = {}
     for i in range(0,9):
         for j in range(0, 9):
@@ -117,7 +132,55 @@ def findPossibleDigitsForCells(grid):
                             possibleDigits[(i, j)].append(digit)
                         else:
                             possibleDigits[(i, j)] = [digit]
+    for opt in opts:
+        opt(possibleDigits)
+
     return possibleDigits
+
+
+def groupPossibleDigitsBasedOn3x3(possibleDigits):
+    occurrences = {}
+    for key, value in possibleDigits.items():
+        gridKey = (key[0] // 3 )* 3 + key[1] // 3
+        if gridKey not in occurrences:
+            occurrences[gridKey] = {}
+
+        for digit in value:
+            if digit not in occurrences[gridKey]:
+                occurrences[gridKey][digit] = []
+            occurrences[gridKey][digit].append(key)
+    return occurrences
+
+def isSameRow(coordinates):
+    if len(coordinates) == 0:
+        return True
+
+    row = coordinates[0][0]
+
+    for coordinate in coordinates:
+        if row != coordinate[0]:
+            return False
+
+    return True
+
+def shootRayRow(possibleDigits, digit, rowIndex, rayOrigin):
+    for coordinate, digits in possibleDigits.items():
+        if coordinate[0] == rowIndex and digit in digits: # if there is target digit in the target row
+            targetGridIndex = (coordinate[0] // 3 )* 3 + coordinate[1] // 3
+            if targetGridIndex == rayOrigin: # skip if in the same 3x3
+                continue
+            digits.remove(digit)
+
+def eliminateDigitsWithRay(possibleDigits):
+    possibleDigitsOn3x3 = groupPossibleDigitsBasedOn3x3(possibleDigits)
+    for gridIndex in possibleDigitsOn3x3:
+        grid = possibleDigitsOn3x3[gridIndex]
+        for digit, coordinates in grid.items():
+            if len(coordinates) == 2 and isSameRow(coordinates):
+                 shootRayRow(possibleDigits, digit, coordinates[0][0], gridIndex)
+
+possible = findPossibleDigitsForCells(raySudoku)
+eliminateDigitsWithRay(possible)
 
 def solveSudoku(grid):
     solutions = []
@@ -149,25 +212,23 @@ def isSolved(grid):
                 return False
     return True
 
-def solveForOneCellWithOneDigit(grid):
+def solveForOneCellWithOneDigit(grid, possibleDigits):
     """
     Checks if there is a cell that can only have one digit
     """
     # This is needed to avoid changing the original grid
     grid = copy.deepcopy(grid)
-    possibleDigits = findPossibleDigitsForCells(grid)
     for key, value in possibleDigits.items():
         if len(value) == 1:
             grid[key[0]][key[1]] = value[0]
     return grid
 
-def solveOneDigitInARow(grid):
+def solveOneDigitInARow(grid, possibleDigits):
     """
     Checks if there is a digit that can only be placed in one cell in a row
     """
     # This is needed to avoid changing the original grid
     grid = copy.deepcopy(grid)
-    possibleDigits = findPossibleDigitsForCells(grid)
     for i in range(0, 9):
         for digit in range(1, 10):
             count = 0
@@ -179,13 +240,12 @@ def solveOneDigitInARow(grid):
                 grid[index[0]][index[1]] = digit
     return grid
 
-def solveOneDigitInAColumn(grid):
+def solveOneDigitInAColumn(grid, possibleDigits):
     """
     Checks if there is a digit that can only be placed in one cell in a column
     """
     # This is needed to avoid changing the original grid
     grid = copy.deepcopy(grid)
-    possibleDigits = findPossibleDigitsForCells(grid)
     for j in range(0, 9):
         for digit in range(1, 10):
             count = 0
@@ -197,13 +257,12 @@ def solveOneDigitInAColumn(grid):
                 grid[index[0]][index[1]] = digit
     return grid
 
-def solveOneDigitIn3x3(grid):
+def solveOneDigitIn3x3(grid, possibleDigits):
     """
     Checks if there is a digit that can only be placed in one cell in a 3x3 grid
     """
     # This is needed to avoid changing the original grid
     grid = copy.deepcopy(grid)
-    possibleDigits = findPossibleDigitsForCells(grid)
     for i in range(0, 9, 3):
         for j in range(0, 9, 3):
             for digit in range(1, 10):
@@ -217,7 +276,7 @@ def solveOneDigitIn3x3(grid):
                     grid[index[0]][index[1]] = digit
     return grid
 
-def solveOneDigit(grid):
+def solveOneDigit(grid, possibleDigits):
     """
     Finds all the cells that can only have one digit and fills them
     """
@@ -227,26 +286,11 @@ def solveOneDigit(grid):
     # It is important that the result of one strategy is NOT fed to the next strategy
     # This is because the strategies should be independent of each other.
     # This requirement may change later on
-    result = mergeTwoGrids(result, solveForOneCellWithOneDigit(grid))
-    result = mergeTwoGrids(result, solveOneDigitInARow(grid))
-    result = mergeTwoGrids(result, solveOneDigitInAColumn(grid))
-    result = mergeTwoGrids(result, solveOneDigitIn3x3(grid))
+    result = mergeTwoGrids(result, solveForOneCellWithOneDigit(grid, possibleDigits))
+    result = mergeTwoGrids(result, solveOneDigitInARow(grid, possibleDigits))
+    result = mergeTwoGrids(result, solveOneDigitInAColumn(grid, possibleDigits))
+    result = mergeTwoGrids(result, solveOneDigitIn3x3(grid, possibleDigits))
     return result
-
-def solveSudokuWithStrategies(grid):
-    """
-    Solves the sudoku using the strategies above
-    """
-    # This is needed to avoid changing the original grid
-    grid = copy.deepcopy(grid)
-    while True:
-        grid = solveForOneCellWithOneDigit(grid)
-        grid = solveOneDigitInARow(grid)
-        grid = solveOneDigitInAColumn(grid)
-        grid = solveOneDigitIn3x3(grid)
-        if isSolved(grid):
-            break
-    return grid
 
 # This function is used to merge two grids
 # If the two grids have the same value in the same cell, the value is kept
