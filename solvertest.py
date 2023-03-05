@@ -383,7 +383,7 @@ class TestSolverMethods(unittest.TestCase):
         for test in tests:
             possible = solver.findPossibleDigitsForCells(test["grid"])
             possibleDigitsOn3x3 = solver.groupPossibleDigitsBasedOn3x3(possible)
-            self.assertEqual(test["want"], solver.findOpposingSquareEdge(possibleDigitsOn3x3, test["originGrid"], test["targetRows"], test["targetNumber"]))
+            self.assertEqual(test["want"], solver.findOpposingSquareEdge(possibleDigitsOn3x3, test["originGrid"], test["targetRows"], test["targetNumber"], solver.gridsOnRow))
 
     def testEliminateDigitsWithSquare(self):
         tests = [

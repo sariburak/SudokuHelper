@@ -161,6 +161,12 @@ def groupPossibleDigitsBasedOn3x3(possibleDigits):
             if digit not in occurrences[gridKey]:
                 occurrences[gridKey][digit] = []
             occurrences[gridKey][digit].append(key)
+    # Cover the case where all digits in a grid are given/already solved
+    # Not to break the code, we should give empty value to those grids
+    for i in range(0, 9):
+        if i not in occurrences:
+            occurrences[i] = {}
+
     return occurrences
 
 def isSameRow(coordinates):
@@ -199,13 +205,16 @@ def shootRayRow(possibleDigits, digit, rowIndex, rayOrigin, exemptedGrids = []):
                 continue
             digits.remove(digit)
 
-def shootRayColumn(possibleDigits, digit, columnIndex, rayOrigin):
+def shootRayColumn(possibleDigits, digit, columnIndex, rayOrigin, exemptedGrids = []):
     for coordinate, digits in possibleDigits.items():
         if coordinate[1] == columnIndex and digit in digits: # if there is target digit in the target row
             targetGridIndex = (coordinate[0] // 3 )* 3 + coordinate[1] // 3
             if targetGridIndex == rayOrigin: # skip if in the same 3x3
                 continue
-            digits.remove(digits)
+            # TODO: Embed rayOrigin into exemptedGrids
+            if targetGridIndex in exemptedGrids:
+                continue
+            digits.remove(digit)
 
 def eliminateDigitsWithRay(possibleDigits):
     possibleDigitsOn3x3 = groupPossibleDigitsBasedOn3x3(possibleDigits)
@@ -225,9 +234,22 @@ def repeatingRows(coordinates):
         rows.add(coordinate[0])
     return list(rows)
 
-def findOpposingSquareEdge(possibleDigitsOn3x3, originGrid, targetRows, targetNumber):
+def repeatingColumns(coordinates):
+    columns = set()
+    for coordinate in coordinates:
+        columns.add(coordinate[1])
+    return list(columns)
+
+def gridsOnRow(originGrid):
     start = (originGrid // 3) * 3
-    targetGrids = [i for i in range(start, start + 3) if i != originGrid]
+    return [i for i in range(start, start + 3) if i != originGrid]
+
+def gridsOnColumn(originGrid):
+    start = (originGrid % 3)
+    return [i for i in range(start, start + 7, 3) if i != originGrid]
+
+def findOpposingSquareEdge(possibleDigitsOn3x3, originGrid, targetRows, targetNumber, targetGridStrategy):
+    targetGrids = targetGridStrategy(originGrid)
     res = []
     for targetGrid in targetGrids:
         grid = possibleDigitsOn3x3[targetGrid]
@@ -242,16 +264,19 @@ def eliminateDigitsWithSquare(possibleDigits):
     for gridIndex, grid in possibleDigitsOn3x3.items():
         for number, coordinates in grid.items():
             rows = repeatingRows(coordinates)
+            cols = repeatingColumns(coordinates)
             if len(rows) == 2:
-                edgeGrids = findOpposingSquareEdge(possibleDigitsOn3x3, gridIndex, rows, number)
-                pass
+                edgeGrids = findOpposingSquareEdge(possibleDigitsOn3x3, gridIndex, rows, number, gridsOnRow)
                 for edgeGrid in edgeGrids:
                     shootRayRow(possibleDigits, number, rows[0], gridIndex, [edgeGrid])
                     shootRayRow(possibleDigits, number, rows[1], gridIndex, [edgeGrid])
-                # targetGrids = [i for i in range(start, start + 3) if i != gridIndex and i not in edgeGrids]
-                # for targetGrid in targetGrids:
-                #     shootRayRow(possibleDigits, number, rows[0], grid, [targetGrid])
-                #     shootRayRow(possibleDigits, number, rows[1], grid, [targetGrid])
+            if len(cols) == 2:
+                # TODO: Add unittest for this case
+                # edgeGrids = findOpposingSquareEdge(possibleDigitsOn3x3, gridIndex, cols, number, gridsOnColumn)
+                # for edgeGrid in edgeGrids:
+                #     shootRayColumn(possibleDigits, number, cols[0], gridIndex, [edgeGrid])
+                #     shootRayColumn(possibleDigits, number, cols[1], gridIndex, [edgeGrid])
+                pass
 
 def solveSudoku(grid):
     solutions = []
@@ -351,6 +376,8 @@ def solveOneDigit(grid, possibleDigits):
     """
     Finds all the cells that can only have one digit and fills them
     """
+    eliminateDigitsWithRay(possibleDigits)
+    eliminateDigitsWithSquare(possibleDigits)
     # This is needed to avoid changing the original grid
     result = copy.deepcopy(grid)
     # The results from different strategies are merged

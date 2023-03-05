@@ -26,7 +26,9 @@ This project heavily depends on what I learn from `https://www.pythonguis.com/tu
 
 
 ## TODO
-- Add unit test
+- Add unit test for column square elimination
+- Solve button should check if sudoku is really solved correctly. This is important to check if separate strategies are implemented correctly.
+- Create docs for every elimination method
 
 ## Bugs
 - Not known any
