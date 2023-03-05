@@ -1,2 +1,4 @@
 PyQt6
 requests
+selenium
+chrome-local-storage

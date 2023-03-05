@@ -84,6 +84,18 @@ raySudoku = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
+squareExample = [
+    [9, 0, 0, 0, 2, 7, 0, 5, 0],
+    [0, 5, 0, 0, 0, 0, 9, 0, 4],
+    [0, 0, 0, 5, 0, 4, 0, 0, 0],
+    [8, 0, 0, 0, 7, 5, 6, 4, 9],
+    [1, 0, 0, 0, 4, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 9, 8, 0, 1],
+    [0, 0, 0, 4, 5, 1, 0, 0, 0],
+    [0, 0, 0, 7, 3, 0, 0, 1, 0],
+    [5, 0, 1, 0, 0, 2, 0, 3, 7]
+]
+
 exampleColors = [
     ["red" for _ in range(9)],
     ["blue" for _ in range(9)],
@@ -163,24 +175,83 @@ def isSameRow(coordinates):
 
     return True
 
-def shootRayRow(possibleDigits, digit, rowIndex, rayOrigin):
+def isSameColumn(coordinates):
+    if len(coordinates) == 0:
+        return True
+
+    column = coordinates[0][1]
+
+    for coordinate in coordinates:
+        if column != coordinate[1]:
+            return False
+
+    return True
+
+# TODO: I feel like there should be a way to refactor shootRayRow and shootRayColumn. They are almost identical
+def shootRayRow(possibleDigits, digit, rowIndex, rayOrigin, exemptedGrids = []):
     for coordinate, digits in possibleDigits.items():
         if coordinate[0] == rowIndex and digit in digits: # if there is target digit in the target row
+            targetGridIndex = (coordinate[0] // 3 ) * 3 + coordinate[1] // 3
+            if targetGridIndex == rayOrigin: # skip if in the same 3x3
+                continue
+            # TODO: Embed rayOrigin into exemptedGrids
+            if targetGridIndex in exemptedGrids:
+                continue
+            digits.remove(digit)
+
+def shootRayColumn(possibleDigits, digit, columnIndex, rayOrigin):
+    for coordinate, digits in possibleDigits.items():
+        if coordinate[1] == columnIndex and digit in digits: # if there is target digit in the target row
             targetGridIndex = (coordinate[0] // 3 )* 3 + coordinate[1] // 3
             if targetGridIndex == rayOrigin: # skip if in the same 3x3
                 continue
-            digits.remove(digit)
+            digits.remove(digits)
 
 def eliminateDigitsWithRay(possibleDigits):
     possibleDigitsOn3x3 = groupPossibleDigitsBasedOn3x3(possibleDigits)
     for gridIndex in possibleDigitsOn3x3:
         grid = possibleDigitsOn3x3[gridIndex]
         for digit, coordinates in grid.items():
-            if len(coordinates) == 2 and isSameRow(coordinates):
-                 shootRayRow(possibleDigits, digit, coordinates[0][0], gridIndex)
+            if len(coordinates) != 2:
+                continue
+            if isSameRow(coordinates):
+                shootRayRow(possibleDigits, digit, coordinates[0][0], gridIndex)
+            if isSameColumn(coordinates):
+                shootRayColumn(possibleDigits, digit, coordinates[0][1], gridIndex)
 
-possible = findPossibleDigitsForCells(raySudoku)
-eliminateDigitsWithRay(possible)
+def repeatingRows(coordinates):
+    rows = set()
+    for coordinate in coordinates:
+        rows.add(coordinate[0])
+    return list(rows)
+
+def findOpposingSquareEdge(possibleDigitsOn3x3, originGrid, targetRows, targetNumber):
+    start = (originGrid // 3) * 3
+    targetGrids = [i for i in range(start, start + 3) if i != originGrid]
+    res = []
+    for targetGrid in targetGrids:
+        grid = possibleDigitsOn3x3[targetGrid]
+        if targetNumber in grid:
+            coordinates = grid[targetNumber]
+            if repeatingRows(coordinates) == targetRows:
+                res.append(targetGrid)
+    return res
+
+def eliminateDigitsWithSquare(possibleDigits):
+    possibleDigitsOn3x3 = groupPossibleDigitsBasedOn3x3(possibleDigits)
+    for gridIndex, grid in possibleDigitsOn3x3.items():
+        for number, coordinates in grid.items():
+            rows = repeatingRows(coordinates)
+            if len(rows) == 2:
+                edgeGrids = findOpposingSquareEdge(possibleDigitsOn3x3, gridIndex, rows, number)
+                pass
+                for edgeGrid in edgeGrids:
+                    shootRayRow(possibleDigits, number, rows[0], gridIndex, [edgeGrid])
+                    shootRayRow(possibleDigits, number, rows[1], gridIndex, [edgeGrid])
+                # targetGrids = [i for i in range(start, start + 3) if i != gridIndex and i not in edgeGrids]
+                # for targetGrid in targetGrids:
+                #     shootRayRow(possibleDigits, number, rows[0], grid, [targetGrid])
+                #     shootRayRow(possibleDigits, number, rows[1], grid, [targetGrid])
 
 def solveSudoku(grid):
     solutions = []

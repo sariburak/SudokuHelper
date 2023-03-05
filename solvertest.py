@@ -346,5 +346,73 @@ class TestSolverMethods(unittest.TestCase):
                     continue
                 self.assertTrue(test["expects"]["notPossible"].isdisjoint(set(digits)))
 
+    def testRepeatingRows(self):
+        tests =  [
+            {
+                "description": "simple example",
+                "coordinates": [(0,1), (2,1)],
+                "want": [0, 2]
+            }
+        ]
+
+        for test in tests:
+            self.assertEqual(test["want"], solver.repeatingRows(test["coordinates"]))
+
+    def testGetSquareEliminatedGrids(self):
+        tests = [
+            {
+                "description": "simple example",
+                "grid": [
+                    [9, 0, 0, 0, 2, 7, 0, 5, 0],
+                    [0, 5, 0, 0, 0, 0, 9, 0, 4],
+                    [0, 0, 0, 5, 0, 4, 0, 0, 0],
+                    [8, 0, 0, 0, 7, 5, 6, 4, 9],
+                    [1, 0, 0, 0, 4, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 9, 8, 0, 1],
+                    [0, 0, 0, 4, 5, 1, 0, 0, 0],
+                    [0, 0, 0, 7, 3, 0, 0, 1, 0],
+                    [5, 0, 1, 0, 0, 2, 0, 3, 7]
+                ],
+                "originGrid": 0,
+                "targetRows": [0, 2],
+                "targetNumber": 1,
+                "want": [2]
+            }
+        ]
+
+        for test in tests:
+            possible = solver.findPossibleDigitsForCells(test["grid"])
+            possibleDigitsOn3x3 = solver.groupPossibleDigitsBasedOn3x3(possible)
+            self.assertEqual(test["want"], solver.findOpposingSquareEdge(possibleDigitsOn3x3, test["originGrid"], test["targetRows"], test["targetNumber"]))
+
+    def testEliminateDigitsWithSquare(self):
+        tests = [
+            {
+                "description": "simple example",
+                "grid": [
+                    [9, 0, 0, 0, 2, 7, 0, 5, 0],
+                    [0, 5, 0, 0, 0, 0, 9, 0, 4],
+                    [0, 0, 0, 5, 0, 4, 0, 0, 0],
+                    [8, 0, 0, 0, 7, 5, 6, 4, 9],
+                    [1, 0, 0, 0, 4, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 9, 8, 0, 1],
+                    [0, 0, 0, 4, 5, 1, 0, 0, 0],
+                    [0, 0, 0, 7, 3, 0, 0, 1, 0],
+                    [5, 0, 1, 0, 0, 2, 0, 3, 7]
+                ],
+                "notPossible": {
+                    "coordinates": [(0, 3), (0, 4), (0,5), (2, 3), (2, 4), (2,5)],
+                    "number": 1
+                }
+            }
+        ]
+
+        for test in tests:
+            possible = solver.findPossibleDigitsForCells(test["grid"])
+            solver.eliminateDigitsWithSquare(possible)
+            for coordinate in test['notPossible']['coordinates']:
+                if coordinate in possible:
+                    self.assertTrue(test['notPossible']['number'] not in possible[coordinate])
+
     if __name__ == '__main__':
         unittest.main()
