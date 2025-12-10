@@ -36,5 +36,3 @@ This project heavily depends on what I learn from `https://www.pythonguis.com/tu
 ## How to run tets
 
 `python -m unittest solvertest.py`
-
-# DUMMY
